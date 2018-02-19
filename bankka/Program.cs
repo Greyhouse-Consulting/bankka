@@ -7,6 +7,7 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.DI.AutoFac;
 using Akka.DI.Core;
+using Akka.Routing;
 using Autofac;
 using bankka.Actors;
 using bankka.Commands.Accounts;
@@ -23,16 +24,18 @@ namespace bankka
 
     public class BankkaService
     {
+        private static ActorSystem _system;
+        private static IActorRef _customerRouter;
+        private static  AutoFacDependencyResolver _resolver;
 
-        public static ActorSystem System;
         public void Start()
         {
 
             Log.Information("Starting System bankka");
-            System = ActorSystem.Create("bankka", GetConfig());
+            _system = ActorSystem.Create("bankka", GetConfig());
 
             var options = new DbContextOptionsBuilder<BankkaContext>()
-                .UseInMemoryDatabase("my_bankka_database")
+                .UseInMemoryDatabase("bankka")
                 .Options;
 
 
@@ -44,16 +47,15 @@ namespace bankka
             builder.RegisterInstance(Log.Logger).As<ILogger>();
             builder.RegisterType<AccountActor>();
             builder.RegisterType<CustomerActor>();
-            builder.RegisterInstance(System).As<ActorSystem>();
+            builder.RegisterInstance(_system).As<ActorSystem>();
             builder.RegisterType<DbContextFactory>().As<IDbContextFactory>();
-            builder.RegisterInstance(options);
+            builder.RegisterInstance(options).As<DbContextOptions<BankkaContext>>();
             var container = builder.Build();
 
-            var resolver = new AutoFacDependencyResolver(container, System);
+            _resolver = new AutoFacDependencyResolver(container, _system);
 
-
-            var customerIds = CreateCustomer();
-            var customers = new List<IActorRef>();
+            //var customerIds = CreateCustomer();
+            //var customers = new List<IActorRef>();
 
 
             //foreach (var customerId in customerIds)
@@ -63,6 +65,9 @@ namespace bankka
             //    customers.Add(customer);
 
             //}
+            var props = _system.DI().Props<CustomerActor>().WithRouter(new BroadcastPool(5));
+
+            _customerRouter = _system.ActorOf(props, "tasker");
         }
 
         private static IList<long> CreateCustomer()
@@ -88,7 +93,7 @@ namespace bankka
         public void Stop()
         {
             Log.Information("Shutting down");
-            CoordinatedShutdown.Get(System).Run().Wait(TimeSpan.FromSeconds(2));
+            CoordinatedShutdown.Get(_system).Run().Wait(TimeSpan.FromSeconds(2));
         }
 
         private static Config GetConfig()
@@ -98,15 +103,16 @@ namespace bankka
                         actor { 
 		                    provider = ""Akka.Cluster.ClusterActorRefProvider, Akka.Cluster""
 	                            deployment {
-								  /tasker {
-									router = consistent-hashing-group
-                                    routees.paths = [""/user/api""]
+								  /api/customers {
+									router = broadcast-pool
+                                    routees.paths = [""/user/customers""]
                                     virtual-nodes-factor = 8
+                                    nr-of-instances = 3 #
                                     cluster {
                                         enabled = on
                                         max-nr-of-instances-per-node = 2
                                         allow-local-routees = off
-                                        use-role = tracker
+                                        use-role = bankka
                                     }
                                 }                
                             }
@@ -138,39 +144,42 @@ namespace bankka
     }
     class Program
     {
-
-
-
-
         static void Main(string[] args)
         {
             var logger = new LoggerConfiguration()
                 .WriteTo.Console()
                 .CreateLogger();
             Log.Logger = logger;
-            var rc = HostFactory.Run(x =>                                   //1
+            try
             {
-                x.UseSerilog(logger);
-                x.Service<BankkaService>(s =>                                   //2
+                var rc = HostFactory.Run(x =>                                   //1
                 {
-                    s.ConstructUsing(name => new BankkaService());                //3
-                    s.WhenStarted(tc => tc.Start());                         //4
-                    s.WhenStopped(tc => tc.Stop());                          //5
+                    x.UseSerilog(logger);
+                    x.Service<BankkaService>(s =>                                   //2
+                    {
+                        s.ConstructUsing(name => new BankkaService());                //3
+                        s.WhenStarted(tc => tc.Start());                         //4
+                        s.WhenStopped(tc => tc.Stop());                          //5
+                    });
+
+                    x.SetDescription("Bankka Host");                   //7
+                    x.SetDisplayName("Bankka");                                  //8
+                    x.SetServiceName("Bankka");                                  //9
                 });
-
-                x.SetDescription("Bankka Host");                   //7
-                x.SetDisplayName("Bankka");                                  //8
-                x.SetServiceName("Bankka");                                  //9
-            });                                                             //10
+                //10
 
 
 
-            var exitCode = (int)Convert.ChangeType(rc, rc.GetTypeCode());  //11
-            Environment.ExitCode = exitCode;
+                var exitCode = (int)Convert.ChangeType(rc, rc.GetTypeCode());  //11
+                Environment.ExitCode = exitCode;
 
-            //{
+                //{
 
-
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
 
 
 

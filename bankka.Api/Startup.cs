@@ -40,7 +40,8 @@ namespace bankka.Api
 
             ActorSystem = ActorSystem.Create("bankka", config);
 
-            var router = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "tasker");
+            //var router = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "tasker");
+            var router = ActorSystem.ActorOf(Props.Empty.WithRouter(new BroadcastPool(4)), "tasker");
             SystemActors.CommandActor = ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)),
                 "commands");
         }
@@ -73,14 +74,15 @@ namespace bankka.Api
 		                    provider = ""Akka.Cluster.ClusterActorRefProvider, Akka.Cluster""
 	                            deployment {
 								  /tasker {
-									router = consistent-hashing-group
-                                    routees.paths = [""/user/customer""]
+									router = broadcast-pool
+                                    routees.paths = [""/user/api""]
                                     virtual-nodes-factor = 8
+                                    nr-of-instances = 3 #
                                     cluster {
                                         enabled = on
                                         max-nr-of-instances-per-node = 2
                                         allow-local-routees = off
-                                        use-role = tracker
+                                        use-role = bankka
                                     }
                                 }                
                             }

@@ -28,7 +28,7 @@ namespace bankka.Actors
             Receive<CustomerDepositCommand>(a => ForwardToAccount(a));
             Receive<CustomerAccountsCommand>(a => CustomerAccounts(a));
 
-            BootAccountsActors();
+          //  BootAccountsActors();
         }
 
         private bool ShouldHandle(OpenAccountCommand openAccountCommand)
