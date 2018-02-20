@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Akka.Actor;
+using bankka.Commands.Customers;
 using bankka.Core;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,7 +28,8 @@ namespace bankka.Api.Controllers
             //if (c == null)
             //    return NotFound(id);
 
-            var accounts = await SystemActors.CommandActor.Ask(new CommandProcessor.CreateAccount(id.ToString()));
+            //var accounts = await SystemActors.CommandActor.Ask(new CommandProcessor.CreateAccount(id.ToString()));
+            var accounts = await SystemActors.CommandActor.Ask(new OpenAccountCommand());
 
             return Ok(accounts);
         }

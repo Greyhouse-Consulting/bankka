@@ -42,8 +42,7 @@ namespace bankka.Api
 
             var router = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "core");
             //var router = ActorSystem.ActorOf(Props.Empty.WithRouter(new BroadcastPool(4)), "tasker");
-            SystemActors.CommandActor = ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)),
-                "commands");
+            SystemActors.CommandActor = router;// ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)), "commands");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

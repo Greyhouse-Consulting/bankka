@@ -66,13 +66,13 @@ namespace bankka.Actors
                 var account = new Account
                 {
                     Balance = 0,
-                    Customer = c.Customers.Find(Convert.ToInt64( Self.Path.Name)),
+                    //Customer = c.Customers.Find(Convert.ToInt64( Self.Path.Name)),
                 };
                 c.Accounts.Add(account);
                 c.SaveChanges();
 
-                var newAccount = _system.ActorOf(_system.DI().Props<AccountActor>(), account.Id.ToString());
-                _accounts.Add(newAccount);
+                //var newAccount = _system.ActorOf(_system.DI().Props<AccountActor>(), account.Id.ToString());
+                //_accounts.Add(newAccount);
 
                 Sender.Tell(account.Id);
             }
