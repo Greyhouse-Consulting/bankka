@@ -9,6 +9,7 @@ using bankka.Commands.Accounts;
 using bankka.Commands.Customers;
 using bankka.Core;
 using bankka.Db;
+using Serilog;
 
 namespace bankka.Actors
 {
@@ -16,13 +17,15 @@ namespace bankka.Actors
     {
         private readonly IDbContextFactory _dbContextFactory;
         private readonly ActorSystem _system;
+        private readonly ILogger _logger;
 
         private readonly IList<IActorRef> _accounts;
 
-        public CustomerActor(IDbContextFactory dbContextFactory, ActorSystem system)
+        public CustomerActor(IDbContextFactory dbContextFactory, ActorSystem system, ILogger logger)
         {
             _dbContextFactory = dbContextFactory;
             _system = system;
+            _logger = logger;
             _accounts = new List<IActorRef>();
             Receive<OpenAccountCommand>(a => OpenAccount(a));
             Receive<CustomerDepositCommand>(a => ForwardToAccount(a));
@@ -61,6 +64,8 @@ namespace bankka.Actors
 
         private void OpenAccount(OpenAccountCommand openAccountCommand)
         {
+
+            _logger.Information("Creating account for customer {0}", "N/A");
             using (var c = _dbContextFactory.Create())
             {
                 var account = new Account
@@ -73,6 +78,7 @@ namespace bankka.Actors
 
                 //var newAccount = _system.ActorOf(_system.DI().Props<AccountActor>(), account.Id.ToString());
                 //_accounts.Add(newAccount);
+                _logger.Information("Account with id '{0}' created", account.Id);
 
                 Sender.Tell(account.Id);
             }
