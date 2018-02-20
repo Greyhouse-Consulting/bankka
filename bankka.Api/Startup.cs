@@ -40,8 +40,8 @@ namespace bankka.Api
 
             ActorSystem = ActorSystem.Create("bankka", config);
 
-            //var router = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "tasker");
-            var router = ActorSystem.ActorOf(Props.Empty.WithRouter(new BroadcastPool(4)), "tasker");
+            var router = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "core");
+            //var router = ActorSystem.ActorOf(Props.Empty.WithRouter(new BroadcastPool(4)), "tasker");
             SystemActors.CommandActor = ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)),
                 "commands");
         }
@@ -73,16 +73,15 @@ namespace bankka.Api
 	                    actor { 
 		                    provider = ""Akka.Cluster.ClusterActorRefProvider, Akka.Cluster""
 	                            deployment {
-								  /tasker {
-									router = broadcast-pool
-                                    routees.paths = [""/user/api""]
-                                    virtual-nodes-factor = 8
+								  /core {
+									router = round-robin-group
+                                    routees.paths = [""/user/core""]
                                     nr-of-instances = 3 #
                                     cluster {
                                         enabled = on
                                         max-nr-of-instances-per-node = 2
                                         allow-local-routees = off
-                                        use-role = bankka
+                                        use-role = core
                                     }
                                 }                
                             }
@@ -105,7 +104,7 @@ namespace bankka.Api
 	                    cluster {
 		                    #will inject this node as a self-seed node at run-time
 		                    seed-nodes = [""akka.tcp://bankka@127.0.0.1:4053""] #manually populate other seed nodes here, i.e. ""akka.tcp://lighthouse@127.0.0.1:4053"", ""akka.tcp://lighthouse@127.0.0.1:4044""
-			                roles = [web]
+			                roles = [api]
 	                    }
                     }
             ";
@@ -115,7 +114,7 @@ namespace bankka.Api
 
     public  class CommandProcessor : ReceiveActor
     {
-        protected readonly IActorRef CommandRouter;
+        private readonly IActorRef _commandRouter;
         public class CreateAccount
         {
             public CreateAccount(string accountId)
@@ -123,7 +122,7 @@ namespace bankka.Api
                 AccountId = accountId;
             }
 
-            public string AccountId { get; private set; }
+            private string AccountId { get; }
         }
      
         private  void Receives()
@@ -134,8 +133,8 @@ namespace bankka.Api
                 {
                     var openAccount = new OpenAccountCommand();
                     
-                    CommandRouter.Tell(openAccount);
-                    CommandRouter.Ask<Routees>(new GetRoutees())
+                    _commandRouter.Tell(openAccount);
+                    _commandRouter.Ask<Routees>(new GetRoutees())
                         .ContinueWith(tr => { Console.WriteLine("I'm here"); })
                         .PipeTo(Sender);
 
@@ -153,7 +152,7 @@ namespace bankka.Api
 
         public CommandProcessor(IActorRef commandRouter)
         {
-            CommandRouter = commandRouter;
+            _commandRouter = commandRouter;
             Receives();
         }
     }

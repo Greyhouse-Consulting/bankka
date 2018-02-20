@@ -27,6 +27,7 @@ namespace bankka
         private static ActorSystem _system;
         private static IActorRef _customerRouter;
         private static  AutoFacDependencyResolver _resolver;
+        private IActorRef _coreActor;
 
         public void Start()
         {
@@ -65,9 +66,12 @@ namespace bankka
             //    customers.Add(customer);
 
             //}
-            var props = _system.DI().Props<CustomerActor>().WithRouter(new BroadcastPool(5));
+            //var props = _system.DI().Props<CustomerActor>().WithRouter(new BroadcastPool(5));
+            var props = _system.DI().Props<CustomerActor>().WithRouter(FromConfig.Instance);
 
-            _customerRouter = _system.ActorOf(props, "tasker");
+            _customerRouter = _system.ActorOf(props, "customers");
+
+            _coreActor = _system.ActorOf(Props.Create(() => new CoreActor(_customerRouter)), "core");
         }
 
         private static IList<long> CreateCustomer()
@@ -103,16 +107,14 @@ namespace bankka
                         actor { 
 		                    provider = ""Akka.Cluster.ClusterActorRefProvider, Akka.Cluster""
 	                            deployment {
-								  /api/customers {
-									router = broadcast-pool
-                                    routees.paths = [""/user/customers""]
-                                    virtual-nodes-factor = 8
+								  /customers {
+									router = round-robin-pool
                                     nr-of-instances = 3 #
                                     cluster {
                                         enabled = on
                                         max-nr-of-instances-per-node = 2
-                                        allow-local-routees = off
-                                        use-role = bankka
+                                        allow-local-routees = on
+                                        use-role = core
                                     }
                                 }                
                             }
@@ -135,7 +137,7 @@ namespace bankka
 	                    cluster {
 		                    #will inject this node as a self-seed node at run-time
 		                    seed-nodes = [""akka.tcp://bankka@127.0.0.1:4053""] #manually populate other seed nodes here, i.e. ""akka.tcp://lighthouse@127.0.0.1:4053"", ""akka.tcp://lighthouse@127.0.0.1:4044""
-                            roles = [web]
+                            roles = [core]
 	                    }
                     }
             ";
