@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace bankka.Core
+﻿namespace bankka.Commands.Customers
 {
     public class CustomerAccountsCommand
     {

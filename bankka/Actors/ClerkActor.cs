@@ -2,6 +2,7 @@
 using Akka.Actor;
 using Akka.DI.Core;
 using bankka.Commands.Customers;
+using bankka.Core.Entities;
 using bankka.Db;
 using Serilog;
 

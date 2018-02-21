@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\bankka.Commands\bankka.Commands.csproj" />
     <ProjectReference Include="..\bankka.Core\bankka.Core.csproj" />
   </ItemGroup>
 

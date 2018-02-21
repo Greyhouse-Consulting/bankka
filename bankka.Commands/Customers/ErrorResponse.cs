@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace bankka.Commands.Customers
+﻿namespace bankka.Commands.Customers
 {
     public class ErrorResponse
     {

@@ -8,7 +8,7 @@ using Akka.DI.Core;
 using bankka.Commands;
 using bankka.Commands.Accounts;
 using bankka.Commands.Customers;
-using bankka.Core;
+using bankka.Core.Entities;
 using bankka.Db;
 using Serilog;
 

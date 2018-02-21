@@ -1,13 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Akka.Actor;
+using bankka.Api.Extensions;
 using bankka.Api.Models;
-using bankka.Commands;
 using bankka.Commands.Customers;
 using FluentValidation;
-using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace bankka.Api.Controllers
 {
@@ -34,72 +31,19 @@ namespace bankka.Api.Controllers
 
             var response = await SystemActors.CommandActor.Ask(new OpenAccountCommand(createAccountModel.Id, createAccountModel.Name));
 
-            if (response is OpenAccountResponse newAccount)
-                return Created($"/accounts/{newAccount.AccountId}", newAccount);
-
-            if (response is ErrorResponse errorResponse)
-                return BadRequest(new ErrorModel("2001", errorResponse.Message));
+            switch (response)
+            {
+                case OpenAccountResponse newAccount:
+                    return Created($"/accounts/{newAccount.AccountId}", newAccount);
+                case ErrorResponse errorResponse:
+                    return BadRequest(new ErrorModel("2001", errorResponse.Message));
+            }
 
             return BadRequest(new ErrorModel("2002", "Unknown response"));
         }
 
     }
 
-
-
-    public static class ModelStateExtensions
-    {
-        public static ErrorModel ToErrorModel(this ModelStateDictionary modelState, string code, string message)
-        {
-            var model = new ErrorModel(code, message);
-            foreach (var state in modelState)
-            {
-                model.Properties.Add(new ErrorModelProperty
-                {
-                    Code = state.Key,
-                    Field = state.Key,
-                });
-            }
-
-            return model;
-        }
-
-        public static ErrorModel ToErrorModel(this ValidationResult validationResult, string code, string message)
-        {
-            var model = new ErrorModel(code, message);
-
-            foreach (var error in validationResult.Errors)
-            {
-                model.Properties.Add(new ErrorModelProperty
-                {
-                    Code = error.ErrorCode,
-                    Field = error.PropertyName,
-                });
-            }
-
-            return model;
-        }
-    }
-
-    public class ErrorModel
-    {
-        public ErrorModel(string code, string message)
-        {
-            Code = code;
-            Message = message;
-            Properties = new List<ErrorModelProperty>();
-        }
-        public string Code { get; }
-        public string Message { get; }
-
-        public IList<ErrorModelProperty> Properties { get; private set; }
-    }
-
-    public class ErrorModelProperty
-    {
-        public string Code { get; set; }
-        public string Field { get; set; }
-    }
 
     public static class SystemActors
     {

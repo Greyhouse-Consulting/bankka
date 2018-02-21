@@ -1,6 +1,6 @@
 ﻿namespace bankka.Commands
 {
-    internal class BalanceCommand
+    public class BalanceCommand
     {
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using Akka.Actor;
 using bankka.Commands;
+using bankka.Core.Entities;
 using bankka.Db;
 using Serilog;
 

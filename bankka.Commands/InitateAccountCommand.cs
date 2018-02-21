@@ -1,6 +1,6 @@
 ﻿namespace bankka.Commands
 {
-    internal class InitateAccountCommand
+    public class InitateAccountCommand
     {
         public long CustomerId { get; }
         public InitateAccountCommand(long customerId)
