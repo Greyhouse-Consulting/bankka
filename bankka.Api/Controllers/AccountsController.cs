@@ -13,7 +13,7 @@ namespace bankka.Api.Controllers
 {
 
     [Route("api/[controller]")]
-    public class AccountsController  : Controller
+    public class AccountsController : Controller
     {
         private readonly ActorSystem _system;
         private readonly IValidator<CreateAccountModel> _validator;
@@ -30,18 +30,19 @@ namespace bankka.Api.Controllers
             var validationResult = _validator.Validate(createAccountModel);
 
             if (!validationResult.IsValid)
-            {
                 return BadRequest(validationResult.ToErrorModel("2000", "input validation error"));
-            }
 
-            var newAccount = await SystemActors.CommandActor.Ask(new OpenAccountCommand(createAccountModel.Id, createAccountModel.Name));
+            var response = await SystemActors.CommandActor.Ask(new OpenAccountCommand(createAccountModel.Id, createAccountModel.Name));
 
-            if(newAccount is OpenAccountResponse response)
-                return Created($"/accounts/{response.AccountId}", newAccount);
+            if (response is OpenAccountResponse newAccount)
+                return Created($"/accounts/{newAccount.AccountId}", newAccount);
 
-            return BadRequest();
+            if (response is ErrorResponse errorResponse)
+                return BadRequest(new ErrorModel("2001", errorResponse.Message));
+
+            return BadRequest(new ErrorModel("2002", "Unknown response"));
         }
-        
+
     }
 
 
@@ -60,13 +61,13 @@ namespace bankka.Api.Controllers
                 });
             }
 
-            return model; 
+            return model;
         }
 
         public static ErrorModel ToErrorModel(this ValidationResult validationResult, string code, string message)
         {
             var model = new ErrorModel(code, message);
-            
+
             foreach (var error in validationResult.Errors)
             {
                 model.Properties.Add(new ErrorModelProperty
@@ -76,7 +77,7 @@ namespace bankka.Api.Controllers
                 });
             }
 
-            return model; 
+            return model;
         }
     }
 
@@ -96,7 +97,7 @@ namespace bankka.Api.Controllers
 
     public class ErrorModelProperty
     {
-        public string  Code { get; set; }
+        public string Code { get; set; }
         public string Field { get; set; }
     }
 

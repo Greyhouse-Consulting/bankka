@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Transactions;
 using Akka.Actor;
 using Akka.DI.Core;
@@ -27,7 +28,7 @@ namespace bankka.Actors
             _system = system;
             _logger = logger;
             _accounts = new List<IActorRef>();
-            Receive<OpenAccountCommand>(a => OpenAccount(a));
+            ReceiveAsync<OpenAccountCommand>(a => OpenAccount(a));
             Receive<CustomerDepositCommand>(a => ForwardToAccount(a));
             Receive<CustomerAccountsCommand>(a => CustomerAccounts(a));
 
@@ -50,43 +51,33 @@ namespace bankka.Actors
             account.Tell(new DepositCommand(depositCommand.Amount));
         }
 
-        private void BootAccountsActors()
+        private async Task OpenAccount(OpenAccountCommand openAccountCommand)
         {
+            _logger.Information("Creating account for customer {0}", openAccountCommand.CustomerId);
             using (var c = _dbContextFactory.Create())
             {
-                foreach (var a in c.Accounts.Where(k => k.Customer.Id == Convert.ToInt64( Self.Path.Name)))
-                {
-                    var newAccount = _system.ActorOf(_system.DI().Props<AccountActor>(), a.Name);
-                    _accounts.Add(newAccount);
-                }
-            }
-        }
-
-        private void OpenAccount(OpenAccountCommand openAccountCommand)
-        {
-
-            _logger.Information("Creating account for customer {0}", "N/A");
-            using (var c = _dbContextFactory.Create())
-            {
-
                 var customer = c.Customers.FirstOrDefault(x => x.Id == openAccountCommand.CustomerId);
+                if (customer == null)
+                {
+                    _logger.Warning("No customer found for id {customerId} ", openAccountCommand.CustomerId);
+                    Sender.Tell(new ErrorResponse($"No customer found for id {openAccountCommand.CustomerId} "));
+                    return;
+                }
+
                 var account = new Account
                 {
                     Balance = 0,
                     Customer = customer,
                     Name = openAccountCommand.Name
                 };
-                c.Accounts.Add(account);
-                c.SaveChanges();
 
-                //var newAccount = _system.ActorOf(_system.DI().Props<AccountActor>(), account.Id.ToString());
-                //_accounts.Add(newAccount);
+                await c.Accounts.AddAsync(account);
+                await c.SaveChangesAsync();
+
                 _logger.Information("Account with id '{0}' and name '{accountName}' created", account.Id, account.Name);
 
                 Sender.Tell(new OpenAccountResponse(account.Id, customer.Name));
             }
-
-
         }
     }
 }

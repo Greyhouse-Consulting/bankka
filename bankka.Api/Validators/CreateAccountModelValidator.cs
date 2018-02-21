@@ -8,7 +8,7 @@ namespace bankka.Api.Validators
         public CreateAccountModelValidator()
         {
             RuleFor(x => x.Id).NotNull().WithErrorCode("3000");
-            RuleFor(x => x.Name).Length(0, 10).WithErrorCode("3001");
+            RuleFor(x => x.Name).Length(0, 20).WithErrorCode("3001");
         }
     }
 }
