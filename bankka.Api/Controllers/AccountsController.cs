@@ -1,8 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Akka.Actor;
+using bankka.Api.Models;
+using bankka.Commands;
 using bankka.Commands.Customers;
-using bankka.Core;
 using Microsoft.AspNetCore.Mvc;
 
 namespace bankka.Api.Controllers
@@ -17,21 +17,16 @@ namespace bankka.Api.Controllers
         {
             _system = system;
         }
-        [HttpGet("{id}")]
-        public async Task<ActionResult> Get(int id)
+
+        [HttpPost]
+        public async Task<ActionResult> Post([FromBody] CreateAccountModel createAccountModel)
         {
+            var newAccount = await SystemActors.CommandActor.Ask(new OpenAccountCommand(createAccountModel.Id, createAccountModel.Name));
 
+            if(newAccount is OpenAccountResponse response)
+                return Created($"/accounts/{response.AccountId}", newAccount);
 
-            //var c = await _system.ActorSelection($"/user/123456").ResolveOne(TimeSpan.FromSeconds(3));
-            //var c = await _system.ActorSelection($"akka.tcp://bankka@127.0.0.1:16001/user/123456").ResolveOne(TimeSpan.FromSeconds(3));
-
-            //if (c == null)
-            //    return NotFound(id);
-
-            //var accounts = await SystemActors.CommandActor.Ask(new CommandProcessor.CreateAccount(id.ToString()));
-            var accounts = await SystemActors.CommandActor.Ask(new OpenAccountCommand());
-
-            return Ok(accounts);
+            return BadRequest();
         }
         
     }
@@ -40,6 +35,5 @@ namespace bankka.Api.Controllers
     public static class SystemActors
     {
         public static IActorRef CommandActor = ActorRefs.Nobody;
-
     }
 }

@@ -1,18 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Routing;
 using bankka.Api.Controllers;
-using bankka.Commands.Customers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace bankka.Api
 {
@@ -111,48 +105,4 @@ namespace bankka.Api
         }
     }
 
-    public  class CommandProcessor : ReceiveActor
-    {
-        private readonly IActorRef _commandRouter;
-        public class CreateAccount
-        {
-            public CreateAccount(string accountId)
-            {
-                AccountId = accountId;
-            }
-
-            private string AccountId { get; }
-        }
-     
-        private  void Receives()
-        {
-            Receive<CreateAccount>(x => 
-            {
-                try
-                {
-                    var openAccount = new OpenAccountCommand();
-                    
-                    _commandRouter.Tell(openAccount);
-                    _commandRouter.Ask<Routees>(new GetRoutees())
-                        .ContinueWith(tr => { Console.WriteLine("I'm here"); })
-                        .PipeTo(Sender);
-
-                    Sender.Tell("AccountCreated");
-
-                }
-                catch (Exception ex)
-                {
-
-                    Console.Write(ex.ToString());
-                    throw;
-                }
-            });
-        }
-
-        public CommandProcessor(IActorRef commandRouter)
-        {
-            _commandRouter = commandRouter;
-            Receives();
-        }
-    }
 }

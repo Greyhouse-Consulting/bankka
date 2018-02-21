@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.DI.AutoFac;
@@ -10,12 +6,9 @@ using Akka.DI.Core;
 using Akka.Routing;
 using Autofac;
 using bankka.Actors;
-using bankka.Commands.Accounts;
-using bankka.Commands.Customers;
 using bankka.Db;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using Serilog.Core;
 using Topshelf;
 
 namespace bankka
@@ -39,61 +32,33 @@ namespace bankka
                 .UseInMemoryDatabase("bankka")
                 .Options;
 
+            var container = CreateContainer(options);
 
+            _resolver = new AutoFacDependencyResolver(container, _system);
 
+            var props = _system.DI().Props<ClerkActor>().WithRouter(FromConfig.Instance);
 
+            _customerRouter = _system.ActorOf(props, "clerks");
 
+            _coreActor = _system.ActorOf(Props.Create(() => new CoreActor(_customerRouter)), "core");
+        }
+
+        private static IContainer CreateContainer(DbContextOptions<BankkaContext> options)
+        {
             var builder = new ContainerBuilder();
 
             builder.RegisterInstance(Log.Logger).As<ILogger>();
             builder.RegisterType<AccountActor>();
             builder.RegisterType<CustomerActor>();
+            builder.RegisterType<ClerkActor>();
             builder.RegisterInstance(_system).As<ActorSystem>();
             builder.RegisterType<DbContextFactory>().As<IDbContextFactory>();
             builder.RegisterInstance(options).As<DbContextOptions<BankkaContext>>();
             var container = builder.Build();
-
-            _resolver = new AutoFacDependencyResolver(container, _system);
-
-            //var customerIds = CreateCustomer();
-            //var customers = new List<IActorRef>();
-
-
-            //foreach (var customerId in customerIds)
-            //{
-
-            //    var customer = System.ActorOf(System.DI().Props<CustomerActor>(), customerId.ToString());
-            //    customers.Add(customer);
-
-            //}
-            //var props = _system.DI().Props<CustomerActor>().WithRouter(new BroadcastPool(5));
-            var props = _system.DI().Props<CustomerActor>().WithRouter(FromConfig.Instance);
-
-            _customerRouter = _system.ActorOf(props, "customers");
-
-            _coreActor = _system.ActorOf(Props.Create(() => new CoreActor(_customerRouter)), "core");
+            return container;
         }
 
-        private static IList<long> CreateCustomer()
-        {
-            var customerIds = new List<long>();
 
-            //var rnd = new Random();
-
-            //for (int i = 0; i < 20; i++)
-            //{
-            //    StringBuilder sb = new StringBuilder();
-            //    for (int j = 0; j < 10; j++)
-            //    {
-            //        sb.Append(rnd.Next(1, 9));
-            //    }
-            //    customerIds.Add(Convert.ToInt64(sb.ToString()));
-            //}
-
-            customerIds.Add(123456);
-
-            return customerIds;
-        }
         public void Stop()
         {
             Log.Information("Shutting down");
@@ -107,12 +72,12 @@ namespace bankka
                         actor { 
 		                    provider = ""Akka.Cluster.ClusterActorRefProvider, Akka.Cluster""
 	                            deployment {
-								  /customers {
+								  /clerks {
 									router = round-robin-pool
                                     nr-of-instances = 3 #
                                     cluster {
                                         enabled = on
-                                        max-nr-of-instances-per-node = 2
+                                        max-nr-of-instances-per-node = 3
                                         allow-local-routees = on
                                         use-role = core
                                     }
@@ -182,39 +147,6 @@ namespace bankka
             {
                 Console.WriteLine(ex);
             }
-
-
-
-            //    var customers = new List<IActorRef>();
-
-            //    var customerAccounts = new List<KeyValuePair<long, long>>();
-
-            //    var rnd = new Random();
-
-
-
-
-            //    for (var i = 0; i < rnd.Next(40, 100); i++)
-            //    {
-            //        var customerAccount = customerAccounts[rnd.Next(0, customerAccounts.Count - 1)];
-
-            //        var customer = customers.First(c => c.Path.Name == customerAccount.Key.ToString());
-
-            //        customer.Tell(new CustomerDepositCommand(customerAccount.Value, Convert.ToDecimal(rnd.NextDouble() * 300)));
-            //    }
-
-            //    Console.WriteLine("Press any key to quit.");
-
-            //    while (!Console.KeyAvailable)
-            //    {
-            //        Thread.Sleep(1000);
-            //    }
-
-
-            //}
         }
-
-
     }
-
 }

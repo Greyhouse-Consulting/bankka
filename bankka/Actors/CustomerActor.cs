@@ -56,7 +56,7 @@ namespace bankka.Actors
             {
                 foreach (var a in c.Accounts.Where(k => k.Customer.Id == Convert.ToInt64( Self.Path.Name)))
                 {
-                    var newAccount = _system.ActorOf(_system.DI().Props<AccountActor>(), a.AccountNo);
+                    var newAccount = _system.ActorOf(_system.DI().Props<AccountActor>(), a.Name);
                     _accounts.Add(newAccount);
                 }
             }
@@ -68,19 +68,22 @@ namespace bankka.Actors
             _logger.Information("Creating account for customer {0}", "N/A");
             using (var c = _dbContextFactory.Create())
             {
+
+                var customer = c.Customers.FirstOrDefault(x => x.Id == openAccountCommand.CustomerId);
                 var account = new Account
                 {
                     Balance = 0,
-                    //Customer = c.Customers.Find(Convert.ToInt64( Self.Path.Name)),
+                    Customer = customer,
+                    Name = openAccountCommand.Name
                 };
                 c.Accounts.Add(account);
                 c.SaveChanges();
 
                 //var newAccount = _system.ActorOf(_system.DI().Props<AccountActor>(), account.Id.ToString());
                 //_accounts.Add(newAccount);
-                _logger.Information("Account with id '{0}' created", account.Id);
+                _logger.Information("Account with id '{0}' and name '{accountName}' created", account.Id, account.Name);
 
-                Sender.Tell(account.Id);
+                Sender.Tell(new OpenAccountResponse(account.Id, customer.Name));
             }
 
 

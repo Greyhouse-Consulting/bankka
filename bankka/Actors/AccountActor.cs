@@ -36,7 +36,7 @@ namespace bankka.Actors
             {
                 var account = new Account
                 {
-                    AccountNo = Self.Path.Name,
+                    Name = Self.Path.Name,
                     Balance = 0
                 };
 

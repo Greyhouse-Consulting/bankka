@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Akka.Actor;
+﻿using Akka.Actor;
 using bankka.Commands.Customers;
 
 namespace bankka.Actors
 {
     public class CoreActor : ReceiveActor
     {
-        private readonly IActorRef _customerRouter;
-
-        public CoreActor(IActorRef customerRouter)
+        public CoreActor(IActorRef clerkRouter)
         {
-            _customerRouter = customerRouter;
-            Receive<OpenAccountCommand>(command => { _customerRouter.Forward(command); });
+            Receive<NewCustomerCommand>(command => { clerkRouter.Forward(command); });
+            Receive<OpenAccountCommand>(command => { clerkRouter.Forward(command); });
         }
     }
 }

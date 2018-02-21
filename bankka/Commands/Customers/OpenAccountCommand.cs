@@ -2,8 +2,13 @@
 {
     public class OpenAccountCommand
     {
-        public OpenAccountCommand()
+        public long CustomerId { get; }
+        public string Name { get; }
+
+        public OpenAccountCommand(long customerId, string name)
         {
+            CustomerId = customerId;
+            Name = name;
         }
     }
 }

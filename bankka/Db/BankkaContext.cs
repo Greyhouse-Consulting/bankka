@@ -34,6 +34,7 @@ namespace bankka.Db
 
         public string Name { get; set; }
         public IList<Account> Accounts { get; set; }
+        public string PhoneNumber { get; set; }
     }
 
     public class Account
@@ -44,12 +45,12 @@ namespace bankka.Db
             Transactions = new List<Transaction>();
         }
         public long Id { get; set; }
-        public string AccountNo { get; set; }
 
         public decimal Balance { get; set; }
 
         public IList<Transaction> Transactions { get; set; }
         public Customer Customer { get; set; }
+        public string Name { get; set; }
     }
 
     public class Transaction
