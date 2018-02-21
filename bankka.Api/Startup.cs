@@ -3,6 +3,10 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Routing;
 using bankka.Api.Controllers;
+using bankka.Api.Models;
+using bankka.Api.Validators;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +28,9 @@ namespace bankka.Api
         public void ConfigureServices(IServiceCollection services)
         {
             SetupAkka();
-            services.AddMvc();
+            services.AddMvc().AddFluentValidation();
+
+            services.AddTransient<IValidator<CreateAccountModel>, CreateAccountModelValidator>();
             services.AddSingleton(typeof(ActorSystem), ActorSystem);
         }
 
@@ -104,5 +110,4 @@ namespace bankka.Api
             return ConfigurationFactory.ParseString(configString);
         }
     }
-
 }
