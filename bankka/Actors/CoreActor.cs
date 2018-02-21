@@ -1,4 +1,5 @@
 ﻿using Akka.Actor;
+using bankka.Commands;
 using bankka.Commands.Customers;
 
 namespace bankka.Actors
@@ -9,6 +10,8 @@ namespace bankka.Actors
         {
             Receive<NewCustomerCommand>(command => { clerkRouter.Forward(command); });
             Receive<OpenAccountCommand>(command => { clerkRouter.Forward(command); });
+            Receive<DepositCommand>(command => { clerkRouter.Forward(command); });
+            Receive<DepositCommand>(command => { clerkRouter.Forward(command); });
         }
     }
 }

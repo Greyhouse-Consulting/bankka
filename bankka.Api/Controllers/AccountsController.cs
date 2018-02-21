@@ -2,6 +2,7 @@
 using Akka.Actor;
 using bankka.Api.Extensions;
 using bankka.Api.Models;
+using bankka.Commands;
 using bankka.Commands.Customers;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +41,17 @@ namespace bankka.Api.Controllers
             }
 
             return BadRequest(new ErrorModel("2002", "Unknown response"));
+        }
+
+        [HttpPost]
+        [Route("api/[controller]/transactions")]
+        public async Task<IActionResult> Transfer([FromBody] TransactionModel transaction)
+        {
+            if (transaction.TransactionType == TransactionType.Deposit)
+            {
+                SystemActors.CommandActor.Tell(new DepositCommand(transaction.ToAccountId, transaction.Amount));
+            }
+            return Ok();
         }
 
     }

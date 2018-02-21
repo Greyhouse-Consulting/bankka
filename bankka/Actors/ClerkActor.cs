@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.DI.Core;
+using bankka.Commands;
 using bankka.Commands.Customers;
 using bankka.Core.Entities;
 using bankka.Db;
@@ -22,6 +23,18 @@ namespace bankka.Actors
 
             ReceiveAsync<NewCustomerCommand>(NewCustomerAsync);
             Receive<OpenAccountCommand>(m => OpenAccount(m));
+            Receive<DepositCommand>(m => Deposit(m));
+            Receive<WithdrawCommand>(m => Withdraw(m));
+        }
+
+        private void Withdraw(WithdrawCommand withdrawCommand)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        private void Deposit(DepositCommand depositCommand)
+        {
+            throw new System.NotImplementedException();
         }
 
         public void OpenAccount(OpenAccountCommand openAccountCommand)

@@ -2,8 +2,11 @@
 {
     public class WithdrawCommand : AccountCommand
     {
-        public WithdrawCommand(decimal amount) : base(amount)
+        public long TransactionToAccountId { get; }
+
+        public WithdrawCommand(long transactionToAccountId, decimal amount) : base(amount)
         {
+            TransactionToAccountId = transactionToAccountId;
         }
     }
 }
