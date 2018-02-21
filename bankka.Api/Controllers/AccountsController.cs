@@ -56,8 +56,7 @@ namespace bankka.Api.Controllers
                 model.Properties.Add(new ErrorModelProperty
                 {
                     Code = state.Key,
-                    Identifier = state.Key,
-                    Description = "asdasd"
+                    Field = state.Key,
                 });
             }
 
