@@ -78,7 +78,7 @@ namespace bankka.Api
                                     nr-of-instances = 3 #
                                     cluster {
                                         enabled = on
-                                        max-nr-of-instances-per-node = 2
+                                        max-nr-of-instances-per-node = 3
                                         allow-local-routees = off
                                         use-role = core
                                     }

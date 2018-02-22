@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.DI.Core;
 using bankka.Commands;
@@ -15,31 +18,59 @@ namespace bankka.Actors
         private readonly ActorSystem _system;
         private readonly ILogger _logger;
 
+        private readonly IDictionary<long, IActorRef> _customers;
+        private readonly IDictionary<long, IActorRef> _cachedAccounts;
+
         public ClerkActor(IDbContextFactory dbContextFactory, ActorSystem system, ILogger logger)
         {
             _dbContextFactory = dbContextFactory;
             _system = system;
             _logger = logger;
 
+            _customers = new ConcurrentDictionary<long, IActorRef>();
+            _cachedAccounts = new ConcurrentDictionary<long, IActorRef>();
+
             ReceiveAsync<NewCustomerCommand>(NewCustomerAsync);
             Receive<OpenAccountCommand>(m => OpenAccount(m));
-            Receive<DepositCommand>(m => Deposit(m));
-            Receive<WithdrawCommand>(m => Withdraw(m));
+            ReceiveAsync<DepositCommand>(DepositAsync);
+            ReceiveAsync<WithdrawCommand>(WithdrawAsync);
         }
 
-        private void Withdraw(WithdrawCommand withdrawCommand)
+        private async Task WithdrawAsync(WithdrawCommand withdrawCommand)
         {
-            throw new System.NotImplementedException();
+            var account = await Context.ActorSelection("./Customer/").ResolveOne(TimeSpan.FromSeconds(10));
+
+            if (account == null)
+            {
+
+            }
+
         }
 
-        private void Deposit(DepositCommand depositCommand)
+        private async Task DepositAsync(DepositCommand depositCommand)
         {
-            throw new System.NotImplementedException();
+            IActorRef account;
+            if(!_cachedAccounts.ContainsKey(depositCommand.TransactionToAccountId))
+                account = await Context.ActorSelection($"../*/*/{depositCommand.TransactionToAccountId}").ResolveOne(TimeSpan.FromSeconds(10));
+            else
+                account = _cachedAccounts[depositCommand.TransactionToAccountId];
+
+            account?.Tell(depositCommand);
         }
 
         public void OpenAccount(OpenAccountCommand openAccountCommand)
         {
-            var customer = _system.ActorOf(_system.DI().Props<CustomerActor>());
+            IActorRef customer;
+            if (_customers.ContainsKey(openAccountCommand.CustomerId))
+            {
+                customer = _customers[openAccountCommand.CustomerId];
+            }
+            else
+            {
+                customer = Context.ActorOf(_system.DI().Props<CustomerActor>(), openAccountCommand.CustomerId.ToString());
+                _customers.Add(openAccountCommand.CustomerId, customer);
+            }
+
             customer.Forward(openAccountCommand);
         }
 
@@ -57,6 +88,10 @@ namespace bankka.Actors
                 await db.Customers.AddAsync(customer);
 
                 await db.SaveChangesAsync();
+
+                var customerActor = Context.ActorOf(_system.DI().Props<CustomerActor>(), customer.Id.ToString());
+
+                _customers.Add(customer.Id, customerActor );
 
                 _logger.Information("Created new customer with id {customerId}, {name}, {phone}", customer.Id, customer.Name, customer.PhoneNumber);
 

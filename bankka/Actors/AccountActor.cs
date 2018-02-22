@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Akka.Actor;
 using bankka.Commands;
 using bankka.Core.Entities;
@@ -25,7 +26,7 @@ namespace bankka.Actors
         {
             Receive<InitateAccountCommand>(b => SetAccountNo(b));
             Receive<WithdrawCommand>(b => Withdraw(b));
-            Receive<DepositCommand>(a => Deposit(a));
+            ReceiveAsync<DepositCommand>(a => DepositAsync(a));
             Receive<BalanceCommand>(a => ReplySaldo(a));
         }
 
@@ -50,7 +51,7 @@ namespace bankka.Actors
 
         private void ReplySaldo(BalanceCommand balanceCommand)
         {
-            _logger.Information("Returning Saldo for  account with id {accountId}", _accountId);
+            _logger.Information("Returning Balance for  account with id {accountId}", _accountId);
 
             using (var db = _dbContextFactory.Create())
             {
@@ -59,7 +60,7 @@ namespace bankka.Actors
             }
         }
 
-        private void Deposit(AccountCommand depositCommand)
+        private async Task DepositAsync(AccountCommand depositCommand)
         {
             _logger.Information("Depositing {amount} to account with no {accountId}", depositCommand.Amount, Self.Path.Name);
 
@@ -73,7 +74,7 @@ namespace bankka.Actors
                     Amount = depositCommand.Amount,
                     DateTime = DateTime.Now
                 });
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
         }
 

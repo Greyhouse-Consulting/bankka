@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace bankka.Api.Controllers
 {
 
-    [Route("api/[controller]")]
+
     public class AccountsController : Controller
     {
         private readonly ActorSystem _system;
@@ -23,6 +23,7 @@ namespace bankka.Api.Controllers
         }
 
         [HttpPost]
+        [Route("api/[controller]")]
         public async Task<ActionResult> Post([FromBody] CreateAccountModel createAccountModel)
         {
             var validationResult = _validator.Validate(createAccountModel);
@@ -44,13 +45,14 @@ namespace bankka.Api.Controllers
         }
 
         [HttpPost]
-        [Route("api/[controller]/transactions")]
-        public async Task<IActionResult> Transfer([FromBody] TransactionModel transaction)
+        [Route("api/[controller]/{accountId}/transactions")]
+        public IActionResult Transfer(long accountId, [FromBody] TransactionModel transaction)
         {
             if (transaction.TransactionType == TransactionType.Deposit)
             {
-                SystemActors.CommandActor.Tell(new DepositCommand(transaction.ToAccountId, transaction.Amount));
+                SystemActors.CommandActor.Tell(new DepositCommand(accountId, transaction.Amount));
             }
+
             return Ok();
         }
 

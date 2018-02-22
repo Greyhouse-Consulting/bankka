@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,14 +21,14 @@ namespace bankka.Actors
         private readonly ActorSystem _system;
         private readonly ILogger _logger;
 
-        private readonly IList<IActorRef> _accounts;
+        private readonly IDictionary<long, IActorRef> _accounts;
 
         public CustomerActor(IDbContextFactory dbContextFactory, ActorSystem system, ILogger logger)
         {
             _dbContextFactory = dbContextFactory;
             _system = system;
             _logger = logger;
-            _accounts = new List<IActorRef>();
+            _accounts = new  ConcurrentDictionary<long, IActorRef>();
             ReceiveAsync<OpenAccountCommand>(a => OpenAccount(a));
             Receive<CustomerDepositCommand>(a => ForwardToAccount(a));
             Receive<CustomerAccountsCommand>(a => CustomerAccounts(a));
@@ -42,13 +43,13 @@ namespace bankka.Actors
 
         private void CustomerAccounts(CustomerAccountsCommand customerAccountsCommand)
         {
-            Sender.Tell(_accounts.Select(a => a.Path.Name));
+            //Sender.Tell(_accounts.Select(a => a.Path.Name));
         }
 
         private void ForwardToAccount(CustomerDepositCommand depositCommand)
         {
-            var account = _accounts.First(a => a.Path.Name == depositCommand.AccountNo.ToString());
-            account.Tell(new DepositCommand(depositCommand.Amount));
+            //var account = _accounts.First(a => a.Path.Name == depositCommand.AccountNo.ToString());
+            //account.Tell(new DepositCommand(depositCommand.AccountNo, depositCommand.Amount));
         }
 
         private async Task OpenAccount(OpenAccountCommand openAccountCommand)
@@ -73,6 +74,10 @@ namespace bankka.Actors
 
                 await c.Accounts.AddAsync(account);
                 await c.SaveChangesAsync();
+
+                var accountActor = Context.ActorOf(_system.DI().Props<AccountActor>(), account.Id.ToString());
+
+                _accounts.Add(account.Id, accountActor);
 
                 _logger.Information("Account with id '{0}' and name '{accountName}' created", account.Id, account.Name);
 
