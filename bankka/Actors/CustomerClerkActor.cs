@@ -12,7 +12,7 @@ using Serilog;
 
 namespace bankka.Actors
 {
-    public class ClerkActor : ReceiveActor
+    public class CustomerClerkActor : ReceiveActor
     {
         private readonly IDbContextFactory _dbContextFactory;
         private readonly ActorSystem _system;
@@ -21,7 +21,7 @@ namespace bankka.Actors
         private readonly IDictionary<long, IActorRef> _customers;
         private readonly IDictionary<long, IActorRef> _cachedAccounts;
 
-        public ClerkActor(IDbContextFactory dbContextFactory, ActorSystem system, ILogger logger)
+        public CustomerClerkActor(IDbContextFactory dbContextFactory, ActorSystem system, ILogger logger)
         {
             _dbContextFactory = dbContextFactory;
             _system = system;
@@ -50,7 +50,7 @@ namespace bankka.Actors
         private async Task DepositAsync(DepositCommand depositCommand)
         {
             IActorRef account;
-            if(!_cachedAccounts.ContainsKey(depositCommand.TransactionToAccountId))
+            if (!_cachedAccounts.ContainsKey(depositCommand.TransactionToAccountId))
                 account = await Context.ActorSelection($"../*/*/{depositCommand.TransactionToAccountId}").ResolveOne(TimeSpan.FromSeconds(10));
             else
                 account = _cachedAccounts[depositCommand.TransactionToAccountId];
@@ -60,20 +60,10 @@ namespace bankka.Actors
 
         public void OpenAccount(OpenAccountCommand openAccountCommand)
         {
-            IActorRef customer;
-            if (_customers.ContainsKey(openAccountCommand.CustomerId))
-            {
-                customer = _customers[openAccountCommand.CustomerId];
-            }
-            else
-            {
-                customer = Context.ActorOf(_system.DI().Props<CustomerActor>(), openAccountCommand.CustomerId.ToString());
-                _customers.Add(openAccountCommand.CustomerId, customer);
-            }
+            var customer = Context.ActorOf(_system.DI().Props<CustomerActor>(), openAccountCommand.CustomerId.ToString());
 
             customer.Forward(openAccountCommand);
         }
-
 
         private async Task NewCustomerAsync(NewCustomerCommand newCustomerCommand)
         {
@@ -91,11 +81,11 @@ namespace bankka.Actors
 
                 var customerActor = Context.ActorOf(_system.DI().Props<CustomerActor>(), customer.Id.ToString());
 
-                _customers.Add(customer.Id, customerActor );
-
                 _logger.Information("Created new customer with id {customerId}, {name}, {phone}", customer.Id, customer.Name, customer.PhoneNumber);
 
                 Sender.Tell(new NewCustomerResponse(customer.Id));
+
+                Context.Stop(customerActor);
             }
         }
     }

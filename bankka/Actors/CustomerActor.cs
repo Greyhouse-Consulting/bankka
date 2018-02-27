@@ -82,6 +82,9 @@ namespace bankka.Actors
                 _logger.Information("Account with id '{0}' and name '{accountName}' created", account.Id, account.Name);
 
                 Sender.Tell(new OpenAccountResponse(account.Id, customer.Name));
+
+                var accountClerks = await Context.ActorSelection("/user/accountClerks").ResolveOne(TimeSpan.FromSeconds(1));
+                accountClerks.Tell(new AccountOpenedCommand(account.Id));
             }
         }
     }

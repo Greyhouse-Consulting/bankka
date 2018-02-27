@@ -18,9 +18,10 @@ namespace bankka
     public class BankkaService
     {
         private static ActorSystem _system;
-        private static IActorRef _customerRouter;
+        private static IActorRef _accountRouter;
         private static  AutoFacDependencyResolver _resolver;
-        private IActorRef _coreActor;
+        private IActorRef _customerClerkActor;
+        private IActorRef _accountClerkRouter;
 
         public void Start()
         {
@@ -36,11 +37,8 @@ namespace bankka
 
             _resolver = new AutoFacDependencyResolver(container, _system);
 
-            var props = _system.DI().Props<ClerkActor>().WithRouter(FromConfig.Instance);
-
-            _customerRouter = _system.ActorOf(props, "clerks");
-
-            _coreActor = _system.ActorOf(Props.Create(() => new CoreActor(_customerRouter)), "core");
+            _customerClerkActor = _system.ActorOf(_system.DI().Props<CustomerClerkActor>().WithRouter(FromConfig.Instance), "customerClerks");
+            _accountClerkRouter = _system.ActorOf(_system.DI().Props<AccountClerkActor>().WithRouter(FromConfig.Instance), "accountClerks");
         }
 
         private static IContainer CreateContainer(DbContextOptions<BankkaContext> options)
@@ -50,7 +48,8 @@ namespace bankka
             builder.RegisterInstance(Log.Logger).As<ILogger>();
             builder.RegisterType<AccountActor>();
             builder.RegisterType<CustomerActor>();
-            builder.RegisterType<ClerkActor>();
+            builder.RegisterType<CustomerClerkActor>();
+            builder.RegisterType<AccountClerkActor>();
             builder.RegisterInstance(_system).As<ActorSystem>();
             builder.RegisterType<DbContextFactory>().As<IDbContextFactory>();
             builder.RegisterInstance(options).As<DbContextOptions<BankkaContext>>();
@@ -72,7 +71,7 @@ namespace bankka
                         actor { 
 		                    provider = ""Akka.Cluster.ClusterActorRefProvider, Akka.Cluster""
 	                            deployment {
-								  /clerks {
+								  /customerClerks {
 									router = round-robin-pool
                                     nr-of-instances = 3 #
                                     cluster {
@@ -81,7 +80,18 @@ namespace bankka
                                         allow-local-routees = on
                                         use-role = core
                                     }
-                                }                
+                                 }
+								  /accountClerks {
+									router = consistent-hashing-pool
+                                    nr-of-instances = 3 #
+                                    virtual-nodes-factor = 10
+                                    cluster {
+                                        enabled = on
+                                        max-nr-of-instances-per-node = 3
+                                        allow-local-routees = on
+                                        use-role = core
+                                    }                
+                                }
                             }
 	                    }
                        loglevel=DEBUG,

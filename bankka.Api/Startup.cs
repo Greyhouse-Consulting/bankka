@@ -40,9 +40,11 @@ namespace bankka.Api
 
             ActorSystem = ActorSystem.Create("bankka", config);
 
-            var router = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "core");
+            var router = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "customerClerks");
+            var accountClerks = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "accountClerks");
             //var router = ActorSystem.ActorOf(Props.Empty.WithRouter(new BroadcastPool(4)), "tasker");
             SystemActors.CommandActor = router;// ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)), "commands");
+            SystemActors.AccountClerks = accountClerks;// ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)), "commands");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -71,10 +73,10 @@ namespace bankka.Api
                     akka {
 	                    actor { 
 		                    provider = ""Akka.Cluster.ClusterActorRefProvider, Akka.Cluster""
-	                            deployment {
-								  /core {
+	                         deployment {
+						        /customerClerks {
 									router = round-robin-group
-                                    routees.paths = [""/user/core""]
+                                    routees.paths = [""/user/customerClerks""]
                                     nr-of-instances = 3 #
                                     cluster {
                                         enabled = on
@@ -82,7 +84,20 @@ namespace bankka.Api
                                         allow-local-routees = off
                                         use-role = core
                                     }
-                                }                
+                                }
+		
+					             /accountClerks {
+									router = consistent-hashing-group
+                                    routees.paths = [""/user/accountClerks""]
+                                    nr-of-instances = 3 #
+                                    virtual-nodes-factor = 10
+                                    cluster {
+                                        enabled = on
+                                        max-nr-of-instances-per-node = 3
+                                        allow-local-routees = off
+                                        use-role = core
+                                    }
+                                }
                             }
 	                    }
                        loglevel=DEBUG,

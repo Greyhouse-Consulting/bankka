@@ -50,7 +50,7 @@ namespace bankka.Api.Controllers
         {
             if (transaction.TransactionType == TransactionType.Deposit)
             {
-                SystemActors.CommandActor.Tell(new DepositCommand(accountId, transaction.Amount));
+                SystemActors.AccountClerks.Tell(new DepositCommand(accountId, transaction.Amount));
             }
 
             return Ok();
@@ -62,5 +62,6 @@ namespace bankka.Api.Controllers
     public static class SystemActors
     {
         public static IActorRef CommandActor = ActorRefs.Nobody;
+        public static IActorRef AccountClerks = ActorRefs.Nobody;
     }
 }
