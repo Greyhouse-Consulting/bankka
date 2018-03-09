@@ -1,4 +1,6 @@
-﻿namespace bankka.Commands.Customers
+﻿using Akka.Routing;
+
+namespace bankka.Commands.Customers
 {
     public class OpenAccountCommand
     {
@@ -10,5 +12,7 @@
             CustomerId = customerId;
             Name = name;
         }
+
+        public object ConsistentHashKey => CustomerId;
     }
 }

@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bankka.Api", "bankka.Api\ba
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bankka.Core", "bankka.Core\bankka.Core.csproj", "{90C0CE17-863D-4799-ADAA-E5B25262C517}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bankka.Commands", "bankka.Commands\bankka.Commands.csproj", "{D2BCFA6F-B6AF-430D-9D41-81B6A564FB6F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bankka.Commands", "bankka.Commands\bankka.Commands.csproj", "{D2BCFA6F-B6AF-430D-9D41-81B6A564FB6F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bankka.Loader", "ConsoleApp1\bankka.Loader.csproj", "{1F7918F0-0889-46CF-8A16-0015300D4DD2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{D2BCFA6F-B6AF-430D-9D41-81B6A564FB6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2BCFA6F-B6AF-430D-9D41-81B6A564FB6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2BCFA6F-B6AF-430D-9D41-81B6A564FB6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F7918F0-0889-46CF-8A16-0015300D4DD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F7918F0-0889-46CF-8A16-0015300D4DD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F7918F0-0889-46CF-8A16-0015300D4DD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F7918F0-0889-46CF-8A16-0015300D4DD2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

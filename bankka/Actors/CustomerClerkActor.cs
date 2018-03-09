@@ -60,9 +60,9 @@ namespace bankka.Actors
 
         public void OpenAccount(OpenAccountCommand openAccountCommand)
         {
-            var customer = Context.ActorOf(_system.DI().Props<CustomerActor>(), openAccountCommand.CustomerId.ToString());
-
-            customer.Forward(openAccountCommand);
+            if (!_customers.ContainsKey(openAccountCommand.CustomerId))
+                _customers.Add(openAccountCommand.CustomerId, Context.ActorOf(_system.DI().Props<CustomerActor>(), openAccountCommand.CustomerId.ToString()));
+            _customers[openAccountCommand.CustomerId].Forward(openAccountCommand);
         }
 
         private async Task NewCustomerAsync(NewCustomerCommand newCustomerCommand)
@@ -84,8 +84,7 @@ namespace bankka.Actors
                 _logger.Information("Created new customer with id {customerId}, {name}, {phone}", customer.Id, customer.Name, customer.PhoneNumber);
 
                 Sender.Tell(new NewCustomerResponse(customer.Id));
-
-                Context.Stop(customerActor);
+                _customers.Add(customer.Id, customerActor);
             }
         }
     }
