@@ -73,7 +73,7 @@ namespace bankka
 	                            deployment {
 								  /customerClerks {
 									router = round-robin-pool
-                                    nr-of-instances = 3 #
+                                    nr-of-instances = 3
                                     cluster {
                                         enabled = on
                                         max-nr-of-instances-per-node = 3
@@ -83,7 +83,7 @@ namespace bankka
                                  }
 								  /accountClerks {
 									router = consistent-hashing-pool
-                                    nr-of-instances = 3 #
+                                    nr-of-instances = 3
                                     virtual-nodes-factor = 10
                                     cluster {
                                         enabled = on
