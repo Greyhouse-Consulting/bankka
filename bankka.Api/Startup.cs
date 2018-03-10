@@ -43,7 +43,7 @@ namespace bankka.Api
             var router = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "customerClerks");
             var accountClerks = ActorSystem.ActorOf(Props.Empty.WithRouter(FromConfig.Instance), "accountClerks");
             //var router = ActorSystem.ActorOf(Props.Empty.WithRouter(new BroadcastPool(4)), "tasker");
-            SystemActors.CommandActor = router;// ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)), "commands");
+            SystemActors.CustomerActor = router;// ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)), "commands");
             SystemActors.AccountClerks = accountClerks;// ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)), "commands");
         }
 

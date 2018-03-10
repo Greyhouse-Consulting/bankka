@@ -10,8 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace bankka.Api.Controllers
 {
-
-
     public class AccountsController : Controller
     {
         private readonly ActorSystem _system;
@@ -32,7 +30,7 @@ namespace bankka.Api.Controllers
             if (!validationResult.IsValid)
                 return BadRequest(validationResult.ToErrorModel("2000", "input validation error"));
 
-            var response = await SystemActors.CommandActor.Ask(new OpenAccountCommand(createAccountModel.Id, createAccountModel.Name));
+            var response = await SystemActors.CustomerActor.Ask(new OpenAccountCommand(createAccountModel.Id, createAccountModel.Name));
 
             switch (response)
             {
@@ -70,7 +68,7 @@ namespace bankka.Api.Controllers
 
     public static class SystemActors
     {
-        public static IActorRef CommandActor = ActorRefs.Nobody;
+        public static IActorRef CustomerActor = ActorRefs.Nobody;
         public static IActorRef AccountClerks = ActorRefs.Nobody;
     }
 }

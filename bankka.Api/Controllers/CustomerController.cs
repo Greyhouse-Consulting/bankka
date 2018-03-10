@@ -16,7 +16,7 @@ namespace bankka.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]AccountModel account)
         {
-            var customer = await SystemActors.CommandActor.Ask(new NewCustomerCommand(account.Name, account.PhoneNumber));
+            var customer = await SystemActors.CustomerActor.Ask(new NewCustomerCommand(account.Name, account.PhoneNumber));
 
             if(customer is NewCustomerResponse response)
                 return Created($"/customer/{response.CustomerId}", response.CustomerId);
