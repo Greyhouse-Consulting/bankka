@@ -19,6 +19,17 @@ namespace bankka.Actors
             Receive<DepositCommand>(m => Deposit(m));
             Receive<AccountOpenedCommand>(m => AccountOpened(m));
             Receive<BalanceCommand>(m => Balance(m));
+            Receive<RetreieveTransactionCommand>(m => RetreieveTransactions(m));
+        }
+
+        private void RetreieveTransactions(RetreieveTransactionCommand retreieveTransactionCommand)
+        {
+            if(!_managedAccounts.TryGetValue(retreieveTransactionCommand.AccountId, out var account))
+            {
+                account = Context.ActorOf(_system.DI().Props<CustomerActor>(), retreieveTransactionCommand.AccountId.ToString());
+            }
+
+            account.Forward(retreieveTransactionCommand);
         }
 
         private void Balance(BalanceCommand balanceCommand)

@@ -56,6 +56,15 @@ namespace bankka.Api.Controllers
         }
 
         [HttpGet]
+        [Route("api/[controller]/{accountId}/transactions")]
+        public async Task<IActionResult> GetTransctions(long accountId)
+        {
+            var transactions = await SystemActors.AccountClerks.Ask(new RetreieveTransactionCommand(accountId));
+
+            return Ok(transactions);
+        }
+
+        [HttpGet]
         [Route("api/[controller]/{accountId}/balance")]
         public async Task<IActionResult> Balance(long accountId)
         {
