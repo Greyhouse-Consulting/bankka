@@ -18,6 +18,17 @@ namespace bankka.Actors
 
             Receive<DepositCommand>(m => Deposit(m));
             Receive<AccountOpenedCommand>(m => AccountOpened(m));
+            Receive<BalanceCommand>(m => Balance(m));
+        }
+
+        private void Balance(BalanceCommand balanceCommand)
+        {
+            if(!_managedAccounts.TryGetValue(balanceCommand.AccountId, out var account))
+            {
+                account = Context.ActorOf(_system.DI().Props<CustomerActor>(), balanceCommand.AccountId.ToString());
+            }
+
+            account.Forward(balanceCommand);
         }
 
         private void AccountOpened(AccountOpenedCommand accountOpenedCommand)
@@ -35,5 +46,6 @@ namespace bankka.Actors
 
             account.Tell(depositCommand);
         }
+
     }
 }

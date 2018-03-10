@@ -3,6 +3,7 @@ using Akka.Actor;
 using bankka.Api.Extensions;
 using bankka.Api.Models;
 using bankka.Commands;
+using bankka.Commands.Accounts;
 using bankka.Commands.Customers;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
@@ -54,6 +55,14 @@ namespace bankka.Api.Controllers
             }
 
             return Ok();
+        }
+
+        [HttpGet]
+        [Route("api/[controller]/{accountId}/balance")]
+        public async Task<IActionResult> Balance(long accountId)
+        {
+            var balance  = await SystemActors.AccountClerks.Ask(new BalanceCommand(accountId));
+            return Ok(balance);
         }
 
     }

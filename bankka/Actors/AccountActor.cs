@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Akka.Actor;
 using bankka.Commands;
+using bankka.Commands.Accounts;
 using bankka.Core.Entities;
 using bankka.Db;
 using Serilog;
@@ -55,7 +56,7 @@ namespace bankka.Actors
 
             using (var db = _dbContextFactory.Create())
             {
-                var account = db.Accounts.Find(_accountId);
+                var account = db.Accounts.Find(balanceCommand.AccountId);
                 Sender.Tell(account.Balance);
             }
         }
