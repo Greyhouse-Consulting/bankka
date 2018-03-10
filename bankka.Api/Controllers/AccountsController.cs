@@ -62,7 +62,6 @@ namespace bankka.Api.Controllers
             var balance  = await SystemActors.AccountClerks.Ask(new BalanceCommand(accountId));
             return Ok(balance);
         }
-
     }
 
 

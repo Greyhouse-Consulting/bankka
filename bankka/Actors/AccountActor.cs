@@ -13,7 +13,6 @@ namespace bankka.Actors
     {
         private readonly IDbContextFactory _dbContextFactory;
         private readonly ILogger _logger;
-        private  long _accountId;
 
         public AccountActor(IDbContextFactory dbContextFactory, ILogger logger)
         {
@@ -25,34 +24,15 @@ namespace bankka.Actors
 
         private void RegisterReceivers()
         {
-            Receive<InitateAccountCommand>(b => SetAccountNo(b));
             Receive<WithdrawCommand>(b => Withdraw(b));
-            ReceiveAsync<DepositCommand>(a => DepositAsync(a));
+            ReceiveAsync<DepositCommand>(DepositAsync);
             Receive<BalanceCommand>(a => ReplySaldo(a));
         }
 
-        private void SetAccountNo(InitateAccountCommand initateAccountCommand)
-        {
-
-            _logger.Information("Creating account wiht no {accountNo}", initateAccountCommand.CustomerId);
-            using (var db = _dbContextFactory.Create())
-            {
-                var account = new Account
-                {
-                    Name = Self.Path.Name,
-                    Balance = 0
-                };
-
-                db.Accounts.Add(account);
-
-                _accountId = account.Id;
-                db.SaveChanges();
-            }
-        }
 
         private void ReplySaldo(BalanceCommand balanceCommand)
         {
-            _logger.Information("Returning Balance for  account with id {accountId}", _accountId);
+            _logger.Information("Returning Balance for  account with id {accountId}", Self.Path.Name);
 
             using (var db = _dbContextFactory.Create())
             {
@@ -81,11 +61,11 @@ namespace bankka.Actors
 
         private void Withdraw(AccountCommand withdrawCommand)
         {
-            _logger.Information("Withdrawing {amount} to account with no {accountId}", withdrawCommand.Amount, _accountId);
+            _logger.Information("Withdrawing {amount} to account with no {accountId}", withdrawCommand.Amount, Self.Path.Name);
 
             using (var db = _dbContextFactory.Create())
             {
-                var account = db.Accounts.Find(_accountId);
+                var account = db.Accounts.Find(Self.Path.Name);
 
                 account.Balance -= withdrawCommand.Amount;
                 account.Transactions.Add(new Transaction
