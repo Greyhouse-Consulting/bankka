@@ -22,14 +22,14 @@ namespace bankka.loader
         {
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Add("User-Agent", ".NET Foundation Repository Reporter");
-            Thread.Sleep(TimeSpan.FromSeconds(15));
+            Console.WriteLine("Press any key to start. (Make sure all processes has been started)");
+            Console.ReadKey();
+        
             var accountModel = new AccountModel
             {
                 Name = "Kalle Kula",
                 PhoneNumber = "1234567890"
             };
-
-
             
             Console.WriteLine("Starting session");
             var sw = new Stopwatch();

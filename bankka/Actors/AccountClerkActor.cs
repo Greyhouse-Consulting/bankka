@@ -9,9 +9,11 @@ namespace bankka.Actors
 {
     public class AccountClerkActor : ReceiveActor
     {
+        private readonly ActorSystem _system;
         private IDictionary<long, IActorRef> _managedAccounts;
-        public AccountClerkActor()
+        public AccountClerkActor(ActorSystem system)
         {
+            _system = system;
             _managedAccounts = new  ConcurrentDictionary<long, IActorRef>();
 
             Receive<DepositCommand>(m => Deposit(m));
@@ -26,7 +28,12 @@ namespace bankka.Actors
 
         private void Deposit(DepositCommand depositCommand)
         {
+            if(!_managedAccounts.TryGetValue(depositCommand.TransactionToAccountId, out var account))
+            {
+                account = Context.ActorOf(_system.DI().Props<CustomerActor>(), depositCommand.TransactionToAccountId.ToString());
+            }
 
+            account.Tell(depositCommand);
         }
     }
 }
