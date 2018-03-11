@@ -80,7 +80,7 @@ namespace bankka.Actors
 
             using (var db = _dbContextFactory.Create())
             {
-                var account = db.Accounts.Find(Self.Path.Name);
+                var account = db.Accounts.Find(Convert.ToInt64(Self.Path.Name));
 
                 account.Balance -= withdrawCommand.Amount;
                 account.Transactions.Add(new Transaction

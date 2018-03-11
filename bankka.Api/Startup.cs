@@ -31,6 +31,7 @@ namespace bankka.Api
             services.AddMvc().AddFluentValidation();
 
             services.AddTransient<IValidator<CreateAccountModel>, CreateAccountModelValidator>();
+            services.AddTransient<IValidator<TransactionModel>, TransactionModelValidator>();
             services.AddSingleton(typeof(ActorSystem), ActorSystem);
         }
 

@@ -1,6 +1,8 @@
-﻿namespace bankka.Commands
+﻿using Akka.Routing;
+
+namespace bankka.Commands
 {
-    public class WithdrawCommand : AccountCommand
+    public class WithdrawCommand : AccountCommand, IConsistentHashable
     {
         public long TransactionToAccountId { get; }
 
@@ -8,5 +10,7 @@
         {
             TransactionToAccountId = transactionToAccountId;
         }
+
+        public object ConsistentHashKey => TransactionToAccountId;
     }
 }

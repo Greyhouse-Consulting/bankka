@@ -12,13 +12,13 @@ namespace bankka.Api.Controllers
 {
     public class AccountsController : Controller
     {
-        private readonly ActorSystem _system;
         private readonly IValidator<CreateAccountModel> _validator;
+        private readonly IValidator<TransactionModel> _transactionModelValidator;
 
-        public AccountsController(ActorSystem system, IValidator<CreateAccountModel> validator)
+        public AccountsController(IValidator<CreateAccountModel> validator,IValidator<TransactionModel> transactionModelValidator)
         {
-            _system = system;
             _validator = validator;
+            _transactionModelValidator = transactionModelValidator;
         }
 
         [HttpPost]
@@ -47,9 +47,24 @@ namespace bankka.Api.Controllers
         [Route("api/[controller]/{accountId}/transactions")]
         public IActionResult Transfer(long accountId, [FromBody] TransactionModel transaction)
         {
-            if (transaction.TransactionType == TransactionType.Deposit)
+
+            var validationResult = _transactionModelValidator.Validate(transaction);
+
+            if (!validationResult.IsValid)
             {
-                SystemActors.AccountClerks.Tell(new DepositCommand(accountId, transaction.Amount));
+                return BadRequest(validationResult.Errors);
+            }
+
+            switch (transaction.TransactionType)
+            {
+                case TransactionType.Deposit:
+                    SystemActors.AccountClerks.Tell(new DepositCommand(accountId, transaction.Amount));
+                    break;
+                case TransactionType.Withdraw:
+                    SystemActors.AccountClerks.Tell(new WithdrawCommand(accountId, transaction.Amount));
+                    break;
+                default:
+                    return BadRequest();
             }
 
             return Ok();

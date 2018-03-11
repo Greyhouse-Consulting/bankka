@@ -17,6 +17,7 @@ namespace bankka.Actors
             _managedAccounts = new  ConcurrentDictionary<long, IActorRef>();
 
             Receive<DepositCommand>(m => Deposit(m));
+            Receive<WithdrawCommand>(m => Withdraw(m));
             Receive<AccountOpenedCommand>(m => AccountOpened(m));
             Receive<BalanceCommand>(m => Balance(m));
             Receive<RetreieveTransactionCommand>(m => RetreieveTransactions(m));
@@ -56,6 +57,15 @@ namespace bankka.Actors
             }
 
             account.Tell(depositCommand);
+        }
+        private void Withdraw(WithdrawCommand withdrawCommand)
+        {
+            if(!_managedAccounts.TryGetValue(withdrawCommand.TransactionToAccountId, out var account))
+            {
+                account = Context.ActorOf(_system.DI().Props<CustomerActor>(), withdrawCommand.TransactionToAccountId.ToString());
+            }
+
+            account.Tell(withdrawCommand);
         }
 
     }
